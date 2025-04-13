@@ -64,44 +64,25 @@ def f_shading(
 
     # Determine the bounding box of the triangle (min and max y)
     ys = [v[1] for v in vertices]
-    min_y_total, max_y_total = max(0, min(ys)), min(height - 1, max(ys))
+    min_y_total = max(0, min(ys))
+    max_y_total = min(height - 1, max(ys))
 
-    #  Initialize active edges to use in the scanline algorithm
-    active_edges: List[Edge] = []
-
-    # Scanline algorithm
     for y in range(min_y_total, max_y_total + 1):
-        # Activate/deactivate edges at current scanline
-        for edge in edges:
-            if edge.min_y == y and edge.m != 0:
-                active_edges.append(edge)
-            if edge.max_y == y and edge in active_edges:
-                active_edges.remove(edge)
+        # Get all edges active at this scanline
+        active_edges = [e for e in edges if e.min_y <= y < e.max_y]
 
-        # Add active points based on the edges
         x_intersects = []
         for edge in active_edges:
             if edge.m == float("inf"):
                 x_intersect = edge.min_x
             else:
-                if edge.m > 0:
-                    x_intersect = edge.min_x + (y - edge.min_y) / edge.m
-                else:
-                    x_intersect = edge.max_x - (y - edge.max_y) / edge.m
+                x_intersect = edge.min_x + (y - edge.min_y) / edge.m
             x_intersects.append(x_intersect)
 
-        # if there are two active points (because we have triangles), fill
-        # the pixels
         if len(x_intersects) == 2:
-            x_start = max(
-                0,
-                min(int(round(x_intersects[0])), int(round(x_intersects[1]))),
-            )
-            x_end = min(
-                width - 1,
-                max(int(round(x_intersects[0])), int(round(x_intersects[1]))),
-            )
-
+            x_start = max(0, int(np.floor(min(x_intersects))))
+            x_end = min(width - 1, int(np.ceil(max(x_intersects))))
             img[y, x_start:x_end] = avg_color
+
 
     return img

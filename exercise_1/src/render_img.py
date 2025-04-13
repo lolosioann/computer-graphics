@@ -5,41 +5,47 @@ from t_shading import t_shading
 
 
 def render_img(
-    faces, vertices, vcolors, depth, shading, text_img=None, uvs=None
+    faces, vertices, vcolors, uvs, depth, shading, texImg
 ):
     """
     Render an image with either flat or texture shading.
 
     Parameters:
-    - faces: K×3 array of vertex indices forming triangles.
-    - vertices: L×2 array of 2D vertex positions.
-    - vcolors: L×3 array of vertex RGB colors.
-    - depth: L×1 array of depth values.
+    - faces: Kx3 array of vertex indices forming triangles.
+    - vertices: Lx2 array of 2D vertex positions.
+    - vcolors: Lx3 array of vertex RGB colors.
+    - uvs: Lx2 array of texture coordinates.
+    - depth: L array of depth values.
     - shading: 'f' for flat shading, 't' for texture shading.
-    - text_img: optional texture image for 't' shading.
+    - texImg: texture image for 't' shading.
 
     Returns:
-    - img: 512×512×3 RGB image.
+    - img: 512x512x3 RGB image (float [0, 1]).
     """
     M, N = 512, 512
     img = np.ones((M, N, 3))  # white background
 
-    # Compute triangle depth (mean of vertex depths)
-    triangle_depths = np.mean(depth[faces], axis=1).flatten()
+    # Store (average_depth, face) tuples
+    face_depths = []
+    for face in faces:
+        avg_depth = np.mean(depth[face])
+        face_depths.append((avg_depth, face))
 
-    # Sort triangles from farthest to closest
-    sorted_indices = np.argsort(-triangle_depths)
-    faces_sorted = faces[sorted_indices]
+    # Sort by average depth (back to front)
+    face_depths.sort(key=lambda x: x[0], reverse=True)
 
-    for face in faces_sorted:
-        tri_vertices = vertices[face]
-        if shading == "f":
-            tri_colors = vcolors[face]
+    # Render each triangle
+    for avg_depth, face in face_depths:
+        idxs = face
+        tri_vertices = vertices[idxs]
+        tri_colors = vcolors[idxs]        
+        tri_uvs = uvs[idxs]               
+
+        if shading == 'f':
             img = f_shading(img, tri_vertices, tri_colors)
-        elif shading == "t":
-            tri_uvs = uvs[face]
-            img = t_shading(img, tri_vertices, tri_uvs, text_img)
+        elif shading == 't':
+            img = t_shading(img, tri_vertices, tri_uvs, texImg)
         else:
-            raise ValueError("Invalid shading mode. Use 'f' or 't'.")
+            raise ValueError("Shading must be 'f' or 't'.")
 
     return img

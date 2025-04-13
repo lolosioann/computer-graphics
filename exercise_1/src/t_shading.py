@@ -47,115 +47,64 @@ def t_shading(
     uv: np.ndarray,
     textImg: np.ndarray,
 ) -> np.ndarray:
-    """
-    Applies texture mapping to a triangle defined by 2D vertices and
-    per-vertex UV coordinates.
-
-    Parameters
-    ----------
-    img : np.ndarray
-        Image buffer (H x W x 3), float [0, 1].
-    vertices : List[List[int]]
-        List of three [x, y] pairs representing triangle vertices.
-    uv : np.ndarray
-        (3 x 2) array of [u, v] texture coordinates for each vertex.
-    textImg : np.ndarray
-        Texture image (H x W x 3), uint8 in [0, 255].
-
-    Returns
-    -------
-    np.ndarray
-        Image with textured triangle drawn.
-    """
     height, width = img.shape[:2]
     tex_h, tex_w = textImg.shape[:2]
 
-    # Build edges
+    # Build edges from triangle vertices
     edges = [
         Edge(vertices[i], vertices[(i + 1) % 3], uv[i], uv[(i + 1) % 3])
         for i in range(3)
     ]
 
-    # Triangle scanline bounds
     ys = [v[1] for v in vertices]
-    min_y_total, max_y_total = max(0, min(ys)), min(height - 1, max(ys))
+    min_y_total = max(0, min(ys))
+    max_y_total = min(height - 1, max(ys))
 
-    active_edges: List[Edge] = []
-
-    # Scanline algorithm
     for y in range(min_y_total, max_y_total + 1):
-        # activate/deactivate edges
-        for edge in edges:
-            if edge.min_y == y and edge.m != 0:
-                active_edges.append(edge)
-            elif edge.max_y == y and edge in active_edges:
-                active_edges.remove(edge)
-    
-        # add active points based on edges
+        # Get active edges for this scanline
+        active_edges = [e for e in edges if e.min_y <= y < e.max_y]
+        if len(active_edges) != 2:
+            continue  # Skip if not exactly two intersections
+
         x_intersects = []
         uv_intersects = []
+
         for edge in active_edges:
-            if edge.m == float("inf"):
-                x_intersect = edge.min_x
+            # Interpolate x
+            dy = edge.p2[1] - edge.p1[1]
+            if dy != 0:
+                t = (y - edge.p1[1]) / dy
+                x = edge.p1[0] + t * (edge.p2[0] - edge.p1[0])
             else:
-                if edge.m > 0:
-                    x_intersect = edge.min_x + (y - edge.min_y) / edge.m
-                else:
-                    x_intersect = edge.max_x - (y - edge.max_y) / edge.m
-            x_intersects.append(x_intersect)
-            uv_interp = vector_interp(
-                edge.p1, edge.p2, edge.uv1, edge.uv2, y, dim=2
-            )
+                x = edge.p1[0]  # Horizontal edge case
+
+            uv_interp = vector_interp(edge.p1, edge.p2, edge.uv1, edge.uv2, y, dim=2)
+
+            x_intersects.append(x)
             uv_intersects.append(uv_interp)
 
+        # Sort intersections from left to right
+        if x_intersects[0] < x_intersects[1]:
+            x0, x1 = x_intersects
+            uv0, uv1 = uv_intersects
+        else:
+            x0, x1 = x_intersects[::-1]
+            uv0, uv1 = uv_intersects[::-1]
 
-            # if there are two active points (because we have triangles), fill
-            # the pixels
-        if len(x_intersects) == 2:
-            if x_intersects[0] < x_intersects[1]:
-                x0, x1 = x_intersects
-                uv0, uv1 = uv_intersects
-            else:
-                x0, x1 = x_intersects[::-1]
-                uv0, uv1 = uv_intersects[::-1]
+        x_start = max(0, int(np.ceil(x0)))
+        x_end = min(width - 1, int(np.floor(x1)))
 
-            x_start = max(0, int(np.ceil(x0)))
-            x_end = min(width - 1, int(np.floor(x1)))
+        for x in range(x_start, x_end + 1):
+            uv_interp = vector_interp((x0, y), (x1, y), uv0, uv1, x, dim=1)
 
-            for x in range(x_start, x_end):
-                uv_interp = vector_interp((x0, y), (x1, y), uv0, uv1, x, dim=1)
+            # Convert UV to texture space
+            u = np.clip(uv_interp[0], 0.0, 1.0)
+            v = np.clip(uv_interp[1], 0.0, 1.0)
 
-                # Convert to texture pixel coordinates
-                u_pixel = int(
-                    np.clip(uv_interp[0] * (tex_w - 1), 0, tex_w - 1)
-                )
-                v_pixel = int(
-                    np.clip(uv_interp[1] * (tex_h - 1), 0, tex_h - 1)
-                )
+            u_pixel = int(u * (tex_w - 1))
+            v_pixel = int(v * (tex_h - 1))
 
-                color = textImg[v_pixel, u_pixel]
-                img[y, x] = color / 255.0
+            color = textImg[v_pixel, u_pixel]
+            img[y, x] = color / 255.0
 
     return img
-
-
-# for y in range(min_y_total, max_y_total + 1):
-#         x_intersections = []
-#         uv_intersections = []
-
-#         for edge in edges:
-#             if edge.ymin <= y <= edge.ymax:
-#                 # Interpolate x
-#                 if edge.p1[1] < edge.p2[1]:
-#                     x = edge.p1[0] + (y - edge.p1[1]) * edge.inv_slope
-#                     uv_interp = vector_interp(
-#                         edge.p1, edge.p2, edge.uv1, edge.uv2, y, dim=2
-#                     )
-#                 else:
-#                     x = edge.p2[0] + (y - edge.p2[1]) * edge.inv_slope
-#                     uv_interp = vector_interp(
-#                         edge.p2, edge.p1, edge.uv2, edge.uv1, y, dim=2
-#                     )
-
-#                 x_intersections.append(x)
-#                 uv_intersections.append(uv_interp)
