@@ -1,20 +1,22 @@
+from pathlib import Path
+
 import cv2
 import numpy as np
-
-from pathlib import Path
 
 from t_shading import t_shading
 
 
 def load_texture():
     # Compute path relative to this file
-    texture_path = Path(__file__).resolve().parent.parent / "src" / "texImg.jpg"
+    texture_path = (
+        Path(__file__).resolve().parent.parent / "src" / "texImg.jpg"
+    )
 
     # Load the texture using OpenCV
     texture = cv2.imread(str(texture_path))
     if texture is None:
         raise FileNotFoundError(f"Texture not found at: {texture_path}")
-    
+
     return texture
 
 

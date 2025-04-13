@@ -98,6 +98,7 @@ def test_triangle_on_edge():
     cv2.destroyAllWindows()
     assert 1 == 1
 
+
 def test_infinite_slope():
     # Mock image (white canvas)
     img = np.ones((500, 500, 3), dtype=np.float32)

@@ -78,7 +78,9 @@ def t_shading(
             else:
                 x = edge.p1[0]  # Horizontal edge case
 
-            uv_interp = vector_interp(edge.p1, edge.p2, edge.uv1, edge.uv2, y, dim=2)
+            uv_interp = vector_interp(
+                edge.p1, edge.p2, edge.uv1, edge.uv2, y, dim=2
+            )
 
             x_intersects.append(x)
             uv_intersects.append(uv_interp)

@@ -4,9 +4,7 @@ from f_shading import f_shading
 from t_shading import t_shading
 
 
-def render_img(
-    faces, vertices, vcolors, uvs, depth, shading, texImg
-):
+def render_img(faces, vertices, vcolors, uvs, depth, shading, texImg):
     """
     Render an image with either flat or texture shading.
 
@@ -38,12 +36,12 @@ def render_img(
     for avg_depth, face in face_depths:
         idxs = face
         tri_vertices = vertices[idxs]
-        tri_colors = vcolors[idxs]        
-        tri_uvs = uvs[idxs]               
+        tri_colors = vcolors[idxs]
+        tri_uvs = uvs[idxs]
 
-        if shading == 'f':
+        if shading == "f":
             img = f_shading(img, tri_vertices, tri_colors)
-        elif shading == 't':
+        elif shading == "t":
             img = t_shading(img, tri_vertices, tri_uvs, texImg)
         else:
             raise ValueError("Shading must be 'f' or 't'.")

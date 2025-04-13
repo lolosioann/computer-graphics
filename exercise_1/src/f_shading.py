@@ -84,5 +84,4 @@ def f_shading(
             x_end = min(width - 1, int(np.ceil(max(x_intersects))))
             img[y, x_start:x_end] = avg_color
 
-
     return img
