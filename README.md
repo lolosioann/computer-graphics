@@ -17,11 +17,11 @@ This module implements a basic triangle rasterizer from scratch in Python, suppo
 <table>
 <tr>
 <td align="center">
-  <img src="exercise_1/src/rendered_img_f.png" width="300"/><br/>
+  <img src="exercise_1/pics/rendered_img_f.png" width="300"/><br/>
   <strong>Flat shading</strong>
 </td>
 <td align="center">
-  <img src="exercise_1/src/rendered_img_t.png" width="300"/><br/>
+  <img src="exercise_1/pics/rendered_img_t.png" width="300"/><br/>
   <strong>Texture shading</strong>
 </td>
 </tr>
