@@ -3,22 +3,38 @@ import numpy as np
 
 def lookat(eye: np.ndarray, up: np.ndarray, target: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
     """
-    Calculate the camera's view matrix (i.e., its coordinate frame transformation
-    specified by a rotation matrix R, and a translation vector t).
+    Computes the camera coordinate frame (rotation matrix R and translation vector t)
+    that aligns the camera to look from `eye` towards `target`, with the given `up` vector.
     
-    :return: a tuple containing:
-        - R: rotation matrix (3 x 3)
-        - t: translation vector (1 x 3)
+    The resulting frame (x_c, y_c, z_c) follows the standard right-handed convention:
+        - z_c: forward direction (from eye to target)
+        - x_c: right direction (perpendicular to up and z_c)
+        - y_c: camera up direction
+
+    Parameters:
+        eye (np.ndarray): The camera position in world coordinates (3,).
+        up (np.ndarray): The up vector in world coordinates (3,).
+        target (np.ndarray): The point the camera is looking at (3,).
+
+    Returns:
+        Tuple[np.ndarray, np.ndarray]:
+            - R (3x3 ndarray): Camera-to-world rotation matrix.
+            - t (1x3 ndarray): Camera origin (eye position) as a row vector.
     """
-    zc = target - eye
-    zc /= np.linalg.norm(zc)
+    # Normalize forward (view direction)
+    z_c = target - eye
+    z_c /= np.linalg.norm(z_c)
 
-    yc = up - np.dot(up, zc) * zc
-    yc /= np.linalg.norm(yc)
+    # Make up orthogonal to forward
+    y_c = up - np.dot(up, z_c) * z_c
+    y_c /= np.linalg.norm(y_c)
 
-    xc = np.cross(yc, zc)
+    x_c = np.cross(y_c, z_c)
 
-    R = np.stack((xc, yc, zc), axis=1)  # Columns: x_c, y_c, z_c
+    # Assemble rotation matrix
+    R = np.stack((x_c, y_c, z_c), axis=1)
+
+    # t vector: camera origin in world coordinates
     t = eye.reshape(1, 3)
 
     return R, t

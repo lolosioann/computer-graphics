@@ -9,32 +9,31 @@ def perspective_project(
     t: np.ndarray
 ) -> Tuple[np.ndarray, np.ndarray]:
     """
-    Project 3D world points onto a 2D image plane using a pinhole camera model.
-    
+    Projects 3D points from world space onto a 2D image plane using a pinhole camera model.
+
     Parameters:
-    - pts: (N, 3) array of 3D points in world coordinates.
-    - focal: scalar focal length.
-    - R: (3, 3) rotation matrix.
-    - t: (3,) translation vector (camera center in world coordinates).
-    
+        pts (np.ndarray): Array of shape (N, 3), representing 3D points in world coordinates.
+        focal (float): Focal length (assumed same in both x and y directions).
+        R (np.ndarray): Rotation matrix of shape (3, 3), defining camera orientation.
+        t (np.ndarray): Translation vector of shape (3,), defining camera center in world space.
+
     Returns:
-    - proj_pts: (N, 2) projected 2D points.
-    - depths: (N,) depth values (Z in the camera frame).
+        Tuple[np.ndarray, np.ndarray]:
+            - proj_pts: (N, 2) array of projected 2D image coordinates.
+            - depths: (N,) array of depth values in the camera coordinate system.
     """
-    # Step 1: Transform to camera coordinate frame using your function
-    cam_pts = world2view(pts, R, t)  # shape (N, 3)
+    # Transform points from world space to camera space
+    cam_pts = world2view(pts, R, t)  # (N, 3)
 
-    # Step 2: Perspective division using focal length
-    X = cam_pts[:, 0]
-    Y = cam_pts[:, 1]
-    Z = cam_pts[:, 2]
+    X, Y, Z = cam_pts[:, 0], cam_pts[:, 1], cam_pts[:, 2]
 
-    # Avoid divide-by-zero errors
-    if np.any(Z == 0):
-        raise ZeroDivisionError("Some points lie on the camera plane (Z=0)")
+    # Guard for divide-by-zero 
+    if np.any(np.isclose(Z, 0)):
+        raise ZeroDivisionError("One or more points project to infinity (Z ≈ 0 in camera space)")
 
+    # Perspective division
     proj_x = focal * X / Z
     proj_y = focal * Y / Z
-    proj_pts = np.stack([proj_x, proj_y], axis=1)  # (N, 2)
+    proj_pts = np.stack((proj_x, proj_y), axis=1)  # (N, 2)
 
     return proj_pts, Z

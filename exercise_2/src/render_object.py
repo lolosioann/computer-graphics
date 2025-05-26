@@ -8,8 +8,8 @@ def render_object(
     v_pos: np.ndarray,
     v_clr: np.ndarray,
     t_pos_idx: np.ndarray,
-    plane_h: int,
-    plane_w: int,
+    plane_h: float,
+    plane_w: float,
     res_h: int,
     res_w: int,
     focal: float,
@@ -20,33 +20,52 @@ def render_object(
     texImg: np.ndarray = None
 ) -> np.ndarray:
     """
-    Render a 3D object from a given camera configuration.
+    Render a 3D object from a specified camera configuration using a basic rasterization pipeline.
 
     Parameters:
-    - v_pos: (N, 3) array of vertex positions in world space
-    - v_clr: (N, 3) array of vertex colors (RGB)
-    - t_pos_idx: (M, 3) array of triangle vertex indices
-    - plane_h, plane_w: physical dimensions of the camera plane
-    - res_h, res_w: image resolution in pixels
-    - focal: focal length of the camera
-    - eye: (3,) camera origin
-    - up: (3,) up direction vector
-    - target: (3,) target point the camera looks at
+        v_pos (np.ndarray): Vertex positions in world space, shape (N, 3).
+        v_clr (np.ndarray): Vertex colors (RGB), shape (N, 3), values in [0, 1].
+        t_pos_idx (np.ndarray): Triangle indices, shape (M, 3), referring to v_pos/v_clr rows.
+        plane_h (float): Sensor (image plane) height in world units.
+        plane_w (float): Sensor (image plane) width in world units.
+        res_h (int): Image height in pixels.
+        res_w (int): Image width in pixels.
+        focal (float): Focal length of the pinhole camera.
+        eye (np.ndarray): Camera position in world coordinates, shape (3,).
+        up (np.ndarray): Camera up direction, shape (3,).
+        target (np.ndarray): Look-at target point, shape (3,).
+        uvs (np.ndarray, optional): Vertex UV coordinates, shape (N, 2).
+        texImg (np.ndarray, optional): Texture image, shape (H, W, 3), with values in [0, 1].
 
     Returns:
-    - (res_h, res_w, 3) RGB image rendered from the specified view
-    """ 
+        np.ndarray: Rendered image as an array of shape (res_h, res_w, 3), with float values in [0, 1].
+    """
 
-    # Compute camera rotation and translation
+    # Compute camera rotation and translation matrix
     R, t = lookat(eye, up, target)
 
+    # Project 3D vertices into 2D camera coordinates
     xy_coords, depths = perspective_project(v_pos, focal, R, t)
-    v_pix = rasterize(xy_coords, plane_w, plane_h, res_w, res_h)
-    # uvs = np.ones((v_pix.shape[0], 2))  # Dummy UVs with correct shape
 
+    # Convert to pixel coordinates
+    v_pix = rasterize(xy_coords, plane_w, plane_h, res_w, res_h)
+
+    # Render final image 
     if uvs is None or texImg is None:
-        img = render_img(t_pos_idx, v_pix, v_clr, uvs=uvs, depth=depths, shading="f", texImg=None, M=res_h, N=res_w)
+        # Flat shading
+        img = render_img(
+            t_pos_idx, v_pix, v_clr,
+            uvs=None, depth=depths,
+            shading="f", texImg=None,
+            M=res_h, N=res_w
+        )
     else:
-        img = render_img(t_pos_idx, v_pix, v_clr, uvs=uvs, depth=depths, shading="t", texImg=texImg, M=res_h, N=res_w)
+        # render with texture shading
+        img = render_img(
+            t_pos_idx, v_pix, v_clr,
+            uvs=uvs, depth=depths,
+            shading="t", texImg=texImg,
+            M=res_h, N=res_w
+        )
 
     return img
