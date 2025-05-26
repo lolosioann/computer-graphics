@@ -71,7 +71,7 @@ def compose(mat1: np.ndarray, mat2: np.ndarray) -> np.ndarray:
     if mat1.shape != (4, 4) or mat2.shape != (4, 4):
         raise ValueError("Both input matrices must be 4x4 affine transformation matrices.")
 
-    mat = np.matmul(mat2, mat1)  # Equivalent to: mat2 @ mat1
+    mat = np.matmul(mat2, mat1)  
     return mat
 
 # This one is a helper function
