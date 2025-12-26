@@ -1,12 +1,18 @@
 import os
+from pathlib import Path
 import numpy as np
 import cv2
 from render_object import render_object
 from demo_utils import save_frame, create_video_from_frames, play_video_with_opencv
 
+# Get script directory
+SCRIPT_DIR = Path(__file__).parent
+PROJECT_ROOT = SCRIPT_DIR.parent.parent
+OUTPUT_DIR = PROJECT_ROOT / "outputs" / "part2"
+OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 # Load Data and Parameters
-data = np.load("hw2.npy", allow_pickle=True).item()
+data = np.load(SCRIPT_DIR / "hw2.npy", allow_pickle=True).item()
 
 v_pos = data["v_pos"]           
 v_uvs = data["v_uvs"]           
@@ -30,11 +36,16 @@ cam_rel_pos = data["k_cam_car_rel_pos"]
 up = data["k_cam_up"].flatten()
 
 # Load texture image
-tex_img = cv2.cvtColor(cv2.imread("stone-72_diffuse.jpg"), cv2.COLOR_BGR2RGB) / 255.0
+tex_path = SCRIPT_DIR / "stone-72_diffuse.jpg"
+if not tex_path.exists():
+    # Fallback: create a simple procedural texture
+    tex_img = np.ones((256, 256, 3), dtype=np.float32) * 0.7
+else:
+    tex_img = cv2.cvtColor(cv2.imread(str(tex_path)), cv2.COLOR_BGR2RGB) / 255.0
 
 # Output directory
-output_dir = "demo_forward"
-os.makedirs(output_dir, exist_ok=True)
+output_dir = OUTPUT_DIR / "demo_forward"
+output_dir.mkdir(parents=True, exist_ok=True)
 
 
 def simulate_forward_looking_camera():
@@ -78,9 +89,9 @@ def simulate_forward_looking_camera():
 
         # Clip and convert to displayable format
         img = (img * 255.0).clip(0, 255)
-        save_frame(img, i, output_dir)
+        save_frame(img, i, str(output_dir))
 
 if __name__ == "__main__":
     simulate_forward_looking_camera()
-    create_video_from_frames(output_dir, "demo_forward.mp4", fps=25)
-    play_video_with_opencv("demo_forward.mp4")
+    create_video_from_frames(str(output_dir), str(OUTPUT_DIR / "demo_forward.mp4"), fps=25)
+    play_video_with_opencv(str(OUTPUT_DIR / "demo_forward.mp4"))

@@ -1,69 +1,128 @@
-# Computer Graphics Exercises
+# Computer Graphics – Course Exercises (AUTh 2024–2025)
 
-This project was developed as part of the course **"Computer Graphics"**, part of the 2024–25 syllabus for the School of Electrical and Computer Engineering, Aristotle University of Thessaloniki.
+This repository contains my exercises for the course **Computer Graphics** at the Department of Electrical and Computer Engineering, Aristotle University of Thessaloniki (AUTh), academic year 2024–2025.
 
-Each directory corresponds to an individual exercise and can be executed independently by running the respective `demo.py` files. Combined, the exercises form the foundation of a complete 2D graphics rendering pipeline.
+All algorithms are implemented **from scratch**, with an emphasis on understanding the underlying principles of 3D rendering, lighting models, and rasterization techniques. The repository includes triangle rasterization, camera transformations, perspective projection, and physically-based lighting.
 
-[1) Triangle Rasterizer](#-triangle-rasterizer)
+## Implemented Methods
 
----
+### Part 1 – Triangle Rasterization
 
-# 🟦 Exercise 1 - Triangle Rasterizer
+* Shading Methods:
+  * Flat Shading (uniform per-triangle color)
+  * Texture Mapping (UV-based texture sampling)
+* Scanline triangle filling with linear interpolation
+* Painter's algorithm for depth sorting
 
-This module implements a basic triangle rasterizer from scratch in Python, supporting both **flat shading** and **texture shading**. The renderer takes as input triangle geometry and vertex attributes and outputs shaded images by scanline-filling triangles in image space.
-
-## 📸 Output Examples
+**Results:**
 
 <table>
 <tr>
 <td align="center">
-  <img src="exercise_1/pics/rendered_img_f.png" width="300"/><br/>
-  <strong>Flat shading</strong>
+  <img src="outputs/part1/rendered_img_f.png" width="300"/><br/>
+  <strong>Flat Shading</strong>
 </td>
 <td align="center">
-  <img src="exercise_1/pics/rendered_img_t.png" width="300"/><br/>
-  <strong>Texture shading</strong>
+  <img src="outputs/part1/rendered_img_t.png" width="300"/><br/>
+  <strong>Texture Mapping</strong>
 </td>
 </tr>
 </table>
 
----
+### Part 2 – 3D Object Rendering
 
-## 🧠 Features
+* Camera Transformations:
+  * LookAt view matrix
+  * World-to-view coordinate transformation
+* Perspective Projection (pinhole camera model)
+* Screen-space rasterization
+* Animated camera trajectories
 
-- ✅ Linear interpolation of vertex attributes (position, color, UV)
-- ✅ Scanline triangle filling
-- ✅ Flat shading (uniform per-triangle color)
-- ✅ Texture mapping via interpolated UV coordinates
-- ✅ Triangle depth sorting using painter’s algorithm
+### Part 3 – Phong Lighting Model
 
----
+* Material Properties:
+  * Ambient, Diffuse, and Specular coefficients
+  * Shininess (Phong exponent)
+* Shading Techniques:
+  * Gouraud Shading (per-vertex lighting, interpolated colors)
+  * Phong Shading (per-pixel lighting, interpolated normals)
+* Vertex normal calculation from triangle mesh
+* Multiple light sources support
 
-## 🚀 How It Works
+**Results:**
 
-1. **Input Data**:
-   - `vertices`: 2D vertex positions
-   - `vcolors`: RGB colors per vertex (for flat shading)
-   - `uv`: texture coordinates (for texture shading)
-   - `depth`: z-values per vertex
+<table>
+<tr>
+<td align="center">
+  <img src="outputs/part3/render_gouraud_full.png" width="300"/><br/>
+  <strong>Gouraud Shading</strong>
+</td>
+<td align="center">
+  <img src="outputs/part3/render_phong_full.png" width="300"/><br/>
+  <strong>Phong Shading</strong>
+</td>
+</tr>
+</table>
 
-2. **Preprocessing**:
-   - Faces are converted to triangle descriptors with vertex data and average depth.
-   - Triangles are sorted in back-to-front order.
+## Installation & Requirements
 
-3. **Rendering**:
-   - For each triangle, depending on the selected shading method (`"f"` or `"t"`), a scanline algorithm fills pixels and assigns colors.
-   - UV-to-texture-space mapping is applied in texture mode.
-
----
-
-## 📦 Requirements
-
-- Python 3.8+
-- NumPy
-- OpenCV (for image loading, resizing, and saving)
-
-Install dependencies with:
+You can easily replicate the environment using **uv**:
 
 ```bash
-pip install -r requirements.txt
+uv sync
+```
+
+## Running the Code
+
+Each demo can be executed as a module or directly:
+
+```bash
+# Part 1 - Triangle Rasterization
+uv run src/part1/demo_f.py  # Flat shading
+uv run src/part1/demo_g.py  # Texture mapping
+
+# Part 2 - 3D Object Rendering
+uv run src/part2/demo1.py   # Forward-looking camera
+uv run src/part2/demo2.py   # Target-looking camera
+
+# Part 3 - Phong Lighting
+uv run src/part3/demo.py    # Generates 8 images (2 shaders × 4 lighting modes)
+```
+
+Detailed execution instructions and experiment descriptions are provided in each part's `docs/` directory.
+
+## Running the Tests
+
+All tests are written using **pytest**. To run the tests for any part:
+
+```bash
+# Run all tests
+uv run pytest
+
+# Run tests for specific part
+uv run pytest tests/part1/ -v
+uv run pytest tests/part2/ -v
+uv run pytest tests/part3/ -v
+```
+
+## Project Structure
+
+```
+computer-graphics/
+├── src/
+│   ├── part1/          # Triangle rasterization
+│   ├── part2/          # 3D rendering pipeline
+│   └── part3/          # Phong lighting model
+├── tests/
+│   ├── part1/          # Unit tests for part 1
+│   ├── part2/          # Unit tests for part 2
+│   └── part3/          # Unit tests for part 3
+├── docs/
+│   ├── part1/          # Assignment specs and reports
+│   ├── part2/
+│   └── part3/
+└── outputs/
+    ├── part1/          # Rendered images
+    ├── part2/
+    └── part3/
+```
